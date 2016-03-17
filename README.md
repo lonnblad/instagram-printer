@@ -7,6 +7,7 @@ Needed values: run.go(instagram_tag, instagram_client_id)
 Dependecies: 
 
   $ pip install Pillow
+  
   $ brew install imagemagick
 
 
