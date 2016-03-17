@@ -3,7 +3,11 @@ Needed resources fonts/Bold.ttf, fonts/Regular.ttf
 
 Needed values: run.go(instagram_tag, instagram_client_id)
 
-Dependecies: pip install Pillow
+
+Dependecies: 
+
+  $ pip install Pillow
+  $ brew install imagemagick
 
 
 Execute: python run.go 
