@@ -52,7 +52,7 @@ def generate_image(image_url, title, info, created_time):
     # Trim nonascii chars
     # info = filter(lambda x: x in string.printable, info)
 
-    info.replace("#"," #")
+    info = info.replace("#"," #")
     lines = []
     lines.append("")
     line_no = 0
