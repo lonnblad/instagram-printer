@@ -18,9 +18,9 @@ text_container_height = 192
 text_padding = 15
 info_max_lines = 6
 
-image_size = (600, 600)
-canvas_size = (600, 900)
-logo_size = (180, 75)
+image_size = (640, 640)
+canvas_size = (640, 960)
+logo_size = (192, 80)
 
 def generate_image(image_url, title, info, created_time):
     # Load external image

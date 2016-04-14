@@ -15,12 +15,12 @@ from PIL import Image
 from threading import Thread
 
 # Configuration
-next_max_tag_id_file = "next_max_tag_id.lock"
+min_tag_id_file = "min_tag_id.lock"
 last_id_file = "last_media_id.lock"
-instagram_tag = "fashion"
-instagram_count = 10
+instagram_tag = ""
+instagram_count = 1
 instagram_client_id = ""
-dry_run = False
+dry_run = True
 sleep_interval = 10
 base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
 printer_name = "SIGMA_EE_CP1200_1"
@@ -40,17 +40,21 @@ def set_last_id(id):
 
 def get_instagram_url():
     url = base_url % (instagram_tag, instagram_count, instagram_client_id)
-    if not os.path.isfile(next_max_tag_id_file):
+    if not os.path.isfile(min_tag_id_file):
         return url
 
-    with open(next_max_tag_id_file, 'r') as fp:
-        return url + "&max_tag_id=" + fp.read()
+    with open(min_tag_id_file, 'r') as fp:
+        tag_id = fp.read()
+        if tag_id != "":
+            url += "&min_tag_id=" + tag_id
+        return url
 
     return url
 
-def store_next_max_tag_id(id):
-    with open(next_max_tag_id_file, 'w') as fp:
-        fp.write(id)
+def store_min_tag_id(id):
+    if id != "":
+        with open(min_tag_id_file, 'w') as fp:
+            fp.write(id)
 
 def get_instagram_feed():
     url = get_instagram_url()
@@ -76,14 +80,14 @@ def print_images():
             pdf_path = png_path.replace(".png", ".pdf")
             if dry_run:
                 Image.open(png_path).show()
-                os.remove(png_path)
+                # os.remove(png_path)
             else:
                 subprocess.check_output(["convert", png_path, pdf_path])
                 subprocess.check_output(["lp",
                     "-d", printer_name,
                     "-o", "page-border=none",
                     "-o", "fit-to-page",
-                    "-o", "media=letter",
+                    "-o", "media=*Postcard",
                     pdf_path])
 
                 while print_images_thread_active and printer_occupied():
@@ -132,8 +136,9 @@ def get_images():
                 image.save("temp/%s.png" % dumpfile)
 
         pagination = content.get("pagination", {})
-        next_max_id = pagination.get("next_max_id")
-        store_next_max_tag_id(next_max_id)
+        min_tag_id = pagination.get("min_tag_id")
+        if min_tag_id != None:
+            store_min_tag_id(min_tag_id)
         time.sleep(sleep_interval)
 
 print_images_thread = Thread(target=print_images)
