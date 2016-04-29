@@ -15,11 +15,11 @@ text_color = (102,102,102,255)
 text_size_title = 24
 text_size_info = 20
 text_container_height = 192
-text_padding = 15
+text_padding = 20
 info_max_lines = 6
 
 image_size = (640, 640)
-canvas_size = (640, 960)
+canvas_size = (640, 947)
 logo_size = (192, 80)
 
 def generate_image(image_url, title, info, created_time):
@@ -32,7 +32,7 @@ def generate_image(image_url, title, info, created_time):
 
     # Draw logo onto the canvas
     logo = Image.open('images/logo.png').resize(logo_size, PIL.Image.LANCZOS).convert('RGBA')
-    canvas.paste(logo, (canvas_size[0]-logo_size[0], canvas_size[1]-logo_size[1], canvas_size[0], canvas_size[1]), logo)
+    canvas.paste(logo, (canvas_size[0]-logo_size[0], canvas_size[1]-logo_size[1] - text_padding, canvas_size[0], canvas_size[1] - text_padding), logo)
 
     # Draw image onto the canvas
     canvas.paste(image, (0, 0, image_size[0], image_size[1]))
@@ -43,7 +43,7 @@ def generate_image(image_url, title, info, created_time):
     # Font + Position for title and print it
     font_title = ImageFont.truetype('fonts/bold.ttf', text_size_title, encoding='unic')
     title_position = (text_padding, image_size[1] + text_padding)
-    draw.text(title_position, title, fill=text_color, font=font_title, encoding='unic')
+    draw.text(title_position, title, fill=text_color, font=font_title)
 
     # Font + Position for info
     font_info = ImageFont.truetype('fonts/regular.ttf', text_size_info)

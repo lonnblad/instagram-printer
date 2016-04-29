@@ -9,6 +9,7 @@ import os.path
 import urllib2
 import json
 import subprocess
+import datetime
 from image import *
 from os import listdir
 from PIL import Image
@@ -24,6 +25,7 @@ dry_run = True
 sleep_interval = 10
 base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
 printer_name = "SIGMA_EE_CP1200_1"
+# printer_name = "Canon_CP910"
 
 def get_last_id():
     if not os.path.isfile(last_id_file):
@@ -68,11 +70,11 @@ def printer_occupied():
 
 def print_images():
     while print_images_thread_active and printer_occupied():
-        print "Printing old file"
+        print "[" + str(datetime.datetime.utcnow()) + "]" + " Printing old file"
         time.sleep(sleep_interval)
 
     while print_images_thread_active:
-        print "*** Print images loop"
+        print "[" + str(datetime.datetime.utcnow()) + "]" + " Print images loop"
 
         imageFiles = [f for f in listdir("temp") if f.endswith(".png")]
         for imageFile in imageFiles:
@@ -80,18 +82,18 @@ def print_images():
             pdf_path = png_path.replace(".png", ".pdf")
             if dry_run:
                 Image.open(png_path).show()
-                # os.remove(png_path)
+                os.remove(png_path)
             else:
-                subprocess.check_output(["convert", png_path, pdf_path])
+                subprocess.check_output(["convert", png_path, "-page", "640x947", pdf_path])
                 subprocess.check_output(["lp",
                     "-d", printer_name,
                     "-o", "page-border=none",
                     "-o", "fit-to-page",
-                    "-o", "media=*Postcard",
+                    "-o", "media=Postcard",
                     pdf_path])
 
                 while print_images_thread_active and printer_occupied():
-                    print "Printing file: %s" % (pdf_path)
+                    print "[" + str(datetime.datetime.utcnow()) + "]" + " Printing file: %s" % (pdf_path)
                     time.sleep(sleep_interval)
 
                 os.remove(pdf_path)
@@ -104,7 +106,7 @@ def print_images():
 
 def get_images():
     while get_images_thread_active:
-        print "*** Get images loop"
+        print "[" + str(datetime.datetime.utcnow()) + "]" + " Get images loop"
         last_id = get_last_id()
 
         content = get_instagram_feed()
@@ -114,7 +116,7 @@ def get_images():
 
             # Media might not be an image
             if elem.get("type") != "image":
-                print "*** Will skip non image media of type: %s, with id: %s" % (elem.get("type"), id)
+                print "[" + str(datetime.datetime.utcnow()) + "]" + " Will skip non image media of type: %s, with id: %s" % (elem.get("type"), id)
                 continue
 
             created_time = elem.get("created_time")
@@ -129,7 +131,7 @@ def get_images():
                 caption = ""
 
             if image_url and id and last_id != id:
-                print "*** Found image with data: #%s, \n\tauthor: %s, \n\tcaption: %s, \n\timage: %s" % (id, author, caption, image_url)
+                print "[" + str(datetime.datetime.utcnow()) + "]" + " Found image with data: #%s, \n\tauthor: %s, \n\tcaption: %s, \n\timage: %s" % (id, author, caption, image_url)
                 set_last_id(id)
                 image = generate_image(image_url, author, caption, created_time)
                 dumpfile = "%s_%s" % (int(time.time()), id)
@@ -161,6 +163,6 @@ try:
     while True:
         time.sleep(sleep_interval)
 except (KeyboardInterrupt, SystemExit):
-    print "\n\n*** Will try to exit gracefully ***\n\n"
+    print "\n\n" + "[" + str(datetime.datetime.utcnow()) + "]" + " Will try to exit gracefully ***\n\n"
     stop_threads();
     sys.exit()
