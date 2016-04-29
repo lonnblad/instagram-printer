@@ -6,10 +6,10 @@ import re
 import sys
 import time
 import os.path
-import urllib2
 import json
 import subprocess
 import datetime
+from urllib.request import urlopen
 from image import *
 from os import listdir
 from PIL import Image
@@ -19,8 +19,8 @@ from threading import Thread
 min_tag_id_file = "min_tag_id.lock"
 last_id_file = "last_media_id.lock"
 instagram_tag = ""
-instagram_count = 1
 instagram_client_id = ""
+instagram_count = 1
 dry_run = True
 sleep_interval = 10
 base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
@@ -61,20 +61,20 @@ def store_min_tag_id(id):
 def get_instagram_feed():
     url = get_instagram_url()
     print(url)
-    raw = urllib2.urlopen(url).read()
-    return json.loads(raw)
+    content = urlopen(url).read()
+    return json.loads(content.decode("utf8"))
 
 def printer_occupied():
     value = subprocess.check_output(["lpstat", "-o", printer_name])
     return value != ""
 
 def print_images():
-    while print_images_thread_active and printer_occupied():
-        print "[" + str(datetime.datetime.utcnow()) + "]" + " Printing old file"
+    while not dry_run and print_images_thread_active and printer_occupied():
+        print("[" + str(datetime.datetime.utcnow()) + "]" + " Printing old file")
         time.sleep(sleep_interval)
 
     while print_images_thread_active:
-        print "[" + str(datetime.datetime.utcnow()) + "]" + " Print images loop"
+        print("[" + str(datetime.datetime.utcnow()) + "]" + " Print images loop")
 
         imageFiles = [f for f in listdir("temp") if f.endswith(".png")]
         for imageFile in imageFiles:
@@ -93,7 +93,7 @@ def print_images():
                     pdf_path])
 
                 while print_images_thread_active and printer_occupied():
-                    print "[" + str(datetime.datetime.utcnow()) + "]" + " Printing file: %s" % (pdf_path)
+                    print("[" + str(datetime.datetime.utcnow()) + "]" + " Printing file: %s" % (pdf_path))
                     time.sleep(sleep_interval)
 
                 os.remove(pdf_path)
@@ -106,7 +106,7 @@ def print_images():
 
 def get_images():
     while get_images_thread_active:
-        print "[" + str(datetime.datetime.utcnow()) + "]" + " Get images loop"
+        print("[" + str(datetime.datetime.utcnow()) + "]" + " Get images loop")
         last_id = get_last_id()
 
         content = get_instagram_feed()
@@ -116,7 +116,7 @@ def get_images():
 
             # Media might not be an image
             if elem.get("type") != "image":
-                print "[" + str(datetime.datetime.utcnow()) + "]" + " Will skip non image media of type: %s, with id: %s" % (elem.get("type"), id)
+                print("[" + str(datetime.datetime.utcnow()) + "]" + " Will skip non image media of type: %s, with id: %s" % (elem.get("type"), id))
                 continue
 
             created_time = elem.get("created_time")
@@ -127,11 +127,11 @@ def get_images():
             try:
                 caption = elem.get("caption", {}).get("text")
             except AttributeError as err:
-                print err
+                print(err)
                 caption = ""
 
             if image_url and id and last_id != id:
-                print "[" + str(datetime.datetime.utcnow()) + "]" + " Found image with data: #%s, \n\tauthor: %s, \n\tcaption: %s, \n\timage: %s" % (id, author, caption, image_url)
+                print("[" + str(datetime.datetime.utcnow()) + "]" + " Found image with data: #%s, \n\tauthor: %s, \n\tcaption: %s, \n\timage: %s" % (id, author, caption, image_url))
                 set_last_id(id)
                 image = generate_image(image_url, author, caption, created_time)
                 dumpfile = "%s_%s" % (int(time.time()), id)
@@ -163,6 +163,6 @@ try:
     while True:
         time.sleep(sleep_interval)
 except (KeyboardInterrupt, SystemExit):
-    print "\n\n" + "[" + str(datetime.datetime.utcnow()) + "]" + " Will try to exit gracefully ***\n\n"
+    print("\n\n" + "[" + str(datetime.datetime.utcnow()) + "]" + " Will try to exit gracefully ***\n\n")
     stop_threads();
     sys.exit()

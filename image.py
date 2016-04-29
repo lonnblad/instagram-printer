@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-import urllib, cStringIO
+import io
 import textwrap
 import datetime
 import PIL
 import string
+from urllib.request import urlopen
 from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
@@ -24,7 +25,7 @@ logo_size = (192, 80)
 
 def generate_image(image_url, title, info, created_time):
     # Load external image
-    fp = cStringIO.StringIO(urllib.urlopen(image_url).read())
+    fp = io.BytesIO(urlopen(image_url).read())
     image = Image.open(fp).resize(image_size, PIL.Image.LANCZOS).convert('RGBA')
 
     # Create canvas

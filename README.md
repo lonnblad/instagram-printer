@@ -1,14 +1,13 @@
 
-Needed resources fonts/Bold.ttf, fonts/Regular.ttf
+Needed resources fonts/Bold.ttf, fonts/Regular.ttf, images/logo.png
 
-Needed values: run.go(instagram_tag, instagram_client_id)
+Dependecies:
 
-
-Dependecies: 
+  $ Python 3.*
 
   $ pip install Pillow
-  
+
   $ brew install imagemagick
 
 
-Execute: python run.go 
+Execute: python run.go
