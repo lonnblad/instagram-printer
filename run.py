@@ -24,9 +24,9 @@ class Tag:
 
 # Configuration
 tags_file = "tags.lock"
-instagram_tags = [Tag("sigmaembedded"),Tag("pinkprogramming")]
+instagram_tags = [Tag("apa"),Tag("bepa")]
 
-instagram_client_id = "cf050c7486414aaf899a6e4c23db7090"
+instagram_client_id = ""
 instagram_count = 1
 dry_run = True
 debug = False
