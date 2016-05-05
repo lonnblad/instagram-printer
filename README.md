@@ -9,5 +9,7 @@ Dependecies:
 
   $ brew install imagemagick
 
+  $ pip install -U jsonpickle
+
 
 Execute: python run.go

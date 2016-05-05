@@ -1,7 +1,6 @@
 #!/usr/bin/env python
-# Usage: while [ 1 -eq 1 ]; do python run.py && sleep 1; done
-# or crontab
 
+import jsonpickle
 import re
 import sys
 import time
@@ -14,53 +13,47 @@ from image import *
 from os import listdir
 from PIL import Image
 from threading import Thread
+from json import JSONEncoder   
+
+class Tag:
+    def __init__(self, tag):
+        self.tag = tag
+        self.min_tag_id = ""
+        self.last_media_id = ""
+        self.enabled = True
 
 # Configuration
-min_tag_id_file = "min_tag_id.lock"
-last_id_file = "last_media_id.lock"
-instagram_tag = ""
+tags_file = "tags.lock"
+instagram_tags = [Tag("apa"),Tag("bepa")]
+
 instagram_client_id = ""
 instagram_count = 1
 dry_run = True
+debug = False
 sleep_interval = 10
 base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
 printer_name = "SIGMA_EE_CP1200_1"
 # printer_name = "Canon_CP910"
 
-def get_last_id():
-    if not os.path.isfile(last_id_file):
+def store_tags():
+    json = jsonpickle.encode(instagram_tags)
+    with open(tags_file, 'w+t') as output:
+        output.write(json)
+
+def load_tags():
+    if not os.path.isfile(tags_file):
         return
 
-    with open(last_id_file, 'r') as fp:
-        return fp.read()
+    with open(tags_file, 'r+t') as input:
+        global instagram_tags
+        instagram_tags = jsonpickle.decode(input.read())
 
-    return
+def get_instagram_feed(tag):
+    url = base_url % (tag.tag, instagram_count, instagram_client_id)
+    if tag.min_tag_id != "":
+        url += "&min_tag_id=" + tag.min_tag_id
 
-def set_last_id(id):
-    with open(last_id_file, 'w') as fp:
-        fp.write(id)
-
-def get_instagram_url():
-    url = base_url % (instagram_tag, instagram_count, instagram_client_id)
-    if not os.path.isfile(min_tag_id_file):
-        return url
-
-    with open(min_tag_id_file, 'r') as fp:
-        tag_id = fp.read()
-        if tag_id != "":
-            url += "&min_tag_id=" + tag_id
-        return url
-
-    return url
-
-def store_min_tag_id(id):
-    if id != "":
-        with open(min_tag_id_file, 'w') as fp:
-            fp.write(id)
-
-def get_instagram_feed():
-    url = get_instagram_url()
-    print(url)
+    # print("\n"+url) //debug
     content = urlopen(url).read()
     return json.loads(content.decode("utf8"))
 
@@ -69,12 +62,13 @@ def printer_occupied():
     return value != ""
 
 def print_images():
+    # try:
     while not dry_run and print_images_thread_active and printer_occupied():
-        print("[" + str(datetime.datetime.utcnow()) + "]" + " Printing old file")
+        print("\n[" + str(datetime.datetime.utcnow()) + "]" + " Printing old file")
         time.sleep(sleep_interval)
 
     while print_images_thread_active:
-        print("[" + str(datetime.datetime.utcnow()) + "]" + " Print images loop")
+        print("@", end="", flush=True)
 
         imageFiles = [f for f in listdir("temp") if f.endswith(".png")]
         for imageFile in imageFiles:
@@ -93,7 +87,7 @@ def print_images():
                     pdf_path])
 
                 while print_images_thread_active and printer_occupied():
-                    print("[" + str(datetime.datetime.utcnow()) + "]" + " Printing file: %s" % (pdf_path))
+                    print("\n[" + str(datetime.datetime.utcnow()) + "]" + " Printing file: %s" % (pdf_path))
                     time.sleep(sleep_interval)
 
                 os.remove(pdf_path)
@@ -104,44 +98,61 @@ def print_images():
 
         time.sleep(sleep_interval)
 
+    # except Exception as err:
+    #     print(err)
+    #     stop_threads()
+
 def get_images():
+    # try:
     while get_images_thread_active:
-        print("[" + str(datetime.datetime.utcnow()) + "]" + " Get images loop")
-        last_id = get_last_id()
+        print("#", end="", flush=True)
+        load_tags()
 
-        content = get_instagram_feed()
-        data = content.get("data", [])
-        for elem in data:
-            id = elem.get("id")
+        for tag in instagram_tags:
+            if tag.enabled:
+                content = get_instagram_feed(tag)
+                data = content.get("data", [])
 
-            # Media might not be an image
-            if elem.get("type") != "image":
-                print("[" + str(datetime.datetime.utcnow()) + "]" + " Will skip non image media of type: %s, with id: %s" % (elem.get("type"), id))
-                continue
+                for elem in data:
+                    id = elem.get("id")
 
-            created_time = elem.get("created_time")
-            author = "@" + elem.get("user", {}).get("username")
-            image_url = elem.get("images", {}).get("standard_resolution", {}).get("url")
+                    # Media might not be an image
+                    if elem.get("type") != "image":
+                        print("\n[" + str(datetime.datetime.utcnow()) + "]" + " Will skip non image media of type: %s, with id: %s" % (elem.get("type"), id))
+                        continue
 
-            # Can be null
-            try:
-                caption = elem.get("caption", {}).get("text")
-            except AttributeError as err:
-                print(err)
-                caption = ""
+                    created_time = elem.get("created_time")
+                    author = "@" + elem.get("user", {}).get("username")
+                    image_url = elem.get("images", {}).get("standard_resolution", {}).get("url")
 
-            if image_url and id and last_id != id:
-                print("[" + str(datetime.datetime.utcnow()) + "]" + " Found image with data: #%s, \n\tauthor: %s, \n\tcaption: %s, \n\timage: %s" % (id, author, caption, image_url))
-                set_last_id(id)
-                image = generate_image(image_url, author, caption, created_time)
-                dumpfile = "%s_%s" % (int(time.time()), id)
-                image.save("temp/%s.png" % dumpfile)
+                    # Can be null
+                    try:
+                        caption = elem.get("caption", {}).get("text")
+                    except AttributeError as err:
+                        print(err)
+                        caption = ""
 
-        pagination = content.get("pagination", {})
-        min_tag_id = pagination.get("min_tag_id")
-        if min_tag_id != None:
-            store_min_tag_id(min_tag_id)
-        time.sleep(sleep_interval)
+                    if image_url and id and tag.last_media_id != id:
+                        print("\n[" + str(datetime.datetime.utcnow()) + "]" + " Found image with data: #%s, \n\tauthor: %s, \n\tcaption: %s, \n\timage: %s" % (id, author, caption, image_url))
+                        tag.last_media_id = id
+
+                        image = generate_image(image_url, author, caption, created_time)
+                        dumpfile = "%s_%s" % (int(time.time()), id)
+                        image.save("temp/%s.png" % dumpfile)
+
+                pagination = content.get("pagination", {})
+                min_tag_id = pagination.get("min_tag_id")
+                if min_tag_id != None:
+                    tag.min_tag_id = min_tag_id
+
+                time.sleep(sleep_interval)
+                # print(tag)
+
+        store_tags()
+
+    # except Exception as err:
+    #     print(err)
+    #     stop_threads()
 
 print_images_thread = Thread(target=print_images)
 print_images_thread_active = True
