@@ -17,14 +17,14 @@ class PrintDispatcher(threading.Thread):
         self.dry_run = dry_run
 
         super(PrintDispatcher, self).__init__()
-        self._stop = threading.Event()
+        self._stopper = threading.Event()
 
     def stop(self):
         print("Stopping Printer thread", flush=True)
-        self._stop.set()
+        self._stopper.set()
 
     def stopped(self):
-        return self._stop.isSet()
+        return self._stopper.isSet()
 
     def run(self):
         if not self.dry_run:

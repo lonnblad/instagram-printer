@@ -18,18 +18,18 @@ instagram_count = 1
 class Instagram(threading.Thread):
     def __init__(self, sleep_interval):
         self.tags_file = "tags.lock"
-        self.instagram_tags = [Tag(""),Tag("")]
+        self.instagram_tags = []
         self.sleep_interval = sleep_interval
 
         super(Instagram, self).__init__()
-        self._stop = threading.Event()
+        self._stopper = threading.Event()
 
     def stop(self):
         print("Stopping Instagram thread", flush=True)
-        self._stop.set()
+        self._stopper.set()
 
     def stopped(self):
-        return self._stop.isSet()
+        return self._stopper.isSet()
 
     def store_tags(self):
         json = jsonpickle.encode(self.instagram_tags)
