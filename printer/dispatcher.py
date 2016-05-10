@@ -11,7 +11,9 @@ from threading import Thread
 from printer.worker import Printer
 from utilities.logger import *
 
+
 class Dispatcher(threading.Thread):
+
     def __init__(self, dry_run, sleep_interval):
         self.printer = Printer("SIGMA_EE_CP1200_1", sleep_interval)
         self.sleep_interval = sleep_interval
@@ -41,7 +43,7 @@ class Dispatcher(threading.Thread):
                     Image.open(image_png_path).show()
                 else:
                     print_image(image_png_path, self.printer_name)
-                
+
                 os.remove(image_png_path)
 
                 if self.stopped():

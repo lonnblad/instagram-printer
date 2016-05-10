@@ -8,10 +8,12 @@ from threading import Thread
 from instagram.tag import Tag
 from utilities.logger import *
 
+
 class Instagram(threading.Thread):
+
     def __init__(self, sleep_interval):
         self.tags_file = "tags.lock"
-        self.instagram_tags = []
+        self.instagram_tags = [Tag("sigmaembedded"), Tag("pinkprogramming")]
         self.sleep_interval = sleep_interval
 
         super(Instagram, self).__init__()

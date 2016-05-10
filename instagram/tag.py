@@ -7,10 +7,12 @@ from instagram.media import Media
 from utilities.logger import *
 
 base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
-instagram_client_id = ""
+instagram_client_id = "cf050c7486414aaf899a6e4c23db7090"
 instagram_count = 1
 
+
 class Tag:
+
     def __init__(self, tag):
         self.tag = tag
         self.min_tag_id = ""
@@ -22,7 +24,7 @@ class Tag:
         if self.min_tag_id != "":
             url += "&min_tag_id=" + self.min_tag_id
 
-        debug("Get media with url: %s", args = (url,))
+        debug("Get media with url: %s", args=(url,))
         content = urlopen(url).read()
         return json.loads(content.decode("utf8"))
 
@@ -33,10 +35,10 @@ class Tag:
 
             for element in collection:
                 media = Media(element)
-                log("Found media: %s", args = (media,))
+                log("Found media: %s", args=(media,))
 
                 if not media.valid():
-                    log("Will skip non valid media: %s", args = (element,))
+                    log("Will skip non valid media: %s", args=(element,))
                     continue
                 if self.last_media_id == media.id:
                     continue
