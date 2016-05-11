@@ -12,7 +12,7 @@ from PIL import ImageDraw
 
 # Styling
 background_color = (255, 255, 255, 0)
-text_color = (102,102,102,255)
+text_color = (102, 102, 102, 255)
 text_size_title = 24
 text_size_info = 20
 text_container_height = 192
@@ -23,37 +23,42 @@ image_size = (640, 640)
 canvas_size = (640, 947)
 logo_size = (192, 80)
 
+
 def generate_image(image_url, title, info, created_time):
     # Load external image
     fp = io.BytesIO(urlopen(image_url).read())
-    image = Image.open(fp).resize(image_size, PIL.Image.LANCZOS).convert('RGBA')
+    image = Image.open(fp).resize(
+        image_size, PIL.Image.LANCZOS).convert('RGBA')
 
     # Create canvas
     canvas = Image.new('RGBA', canvas_size, background_color)
 
     # Draw logo onto the canvas
-    logo = Image.open('images/logo.png').resize(logo_size, PIL.Image.LANCZOS).convert('RGBA')
-    canvas.paste(logo, (canvas_size[0]-logo_size[0], canvas_size[1]-logo_size[1] - text_padding, canvas_size[0], canvas_size[1] - text_padding), logo)
+    logo = Image.open('images/logo.png').resize(logo_size,
+                                                PIL.Image.LANCZOS).convert('RGBA')
+    canvas.paste(logo, (canvas_size[0] - logo_size[0], canvas_size[1] - logo_size[
+                 1] - text_padding, canvas_size[0], canvas_size[1] - text_padding), logo)
 
     # Draw image onto the canvas
     canvas.paste(image, (0, 0, image_size[0], image_size[1]))
 
-
     draw = ImageDraw.Draw(canvas)
 
     # Font + Position for title and print it
-    font_title = ImageFont.truetype('fonts/bold.ttf', text_size_title, encoding='unic')
+    font_title = ImageFont.truetype(
+        'fonts/bold.ttf', text_size_title, encoding='unic')
     title_position = (text_padding, image_size[1] + text_padding)
     draw.text(title_position, title, fill=text_color, font=font_title)
 
     # Font + Position for info
     font_info = ImageFont.truetype('fonts/regular.ttf', text_size_info)
-    info_position = (title_position[0], title_position[1] + font_title.getsize(title)[1] + text_padding)
+    info_position = (title_position[0], title_position[
+                     1] + font_title.getsize(title)[1] + text_padding)
 
     # Trim nonascii chars
     # info = filter(lambda x: x in string.printable, info)
 
-    info = info.replace("#"," #")
+    info = info.replace("#", " #")
     lines = []
     lines.append("")
     line_no = 0
@@ -64,39 +69,45 @@ def generate_image(image_url, title, info, created_time):
             for char in word:
                 if font_info.getsize(lines[line_no] + char)[0] < info_width:
                     lines[line_no] += char
-                else :
+                else:
                     lines.append(char)
                     line_no += 1
         elif font_info.getsize(lines[line_no] + word)[0] < info_width:
             if lines[line_no] != "":
                 lines[line_no] += " "
             lines[line_no] += word
-        else :
+        else:
             lines.append(word)
             line_no += 1
 
     # And nice ending if its to long
     if len(lines) > info_max_lines:
-        lines[info_max_lines-1] = lines[info_max_lines-1][:-3] + "..."
+        lines[info_max_lines - 1] = lines[info_max_lines - 1][:-3] + "..."
 
     # Print all info lines
     offset = 0
     for line in lines[:info_max_lines]:
-        draw.text((info_position[0], info_position[1] + offset), line, font=font_info, fill=text_color)
+        draw.text((info_position[0], info_position[
+                  1] + offset), line, font=font_info, fill=text_color)
         offset += font_info.getsize(line)[1] + text_padding / 3
 
     # Format and print readable time
     if created_time:
-        readable_time = datetime.datetime.fromtimestamp(int(created_time)).strftime('%B %d, %Y at %H:%M')
-        time_position_offset = int((font_title.getsize(title)[1] - font_info.getsize(readable_time)[1]) / 2.)
+        readable_time = datetime.datetime.fromtimestamp(
+            int(created_time)).strftime('%B %d, %Y at %H:%M')
+        time_position_offset = int(
+            (font_title.getsize(title)[1] - font_info.getsize(readable_time)[1]) / 2.)
         time_position = (
-            canvas_size[0] - text_padding - font_info.getsize(readable_time)[0] - time_position_offset,
+            canvas_size[0] - text_padding -
+            font_info.getsize(readable_time)[0] - time_position_offset,
             image_size[1] + text_padding + time_position_offset
         )
 
-        draw.text(time_position, readable_time, fill=text_color, font=font_info)
+        draw.text(time_position, readable_time,
+                  fill=text_color, font=font_info)
 
     return canvas
+
 
 def add_corners(im, rad):
     circle = Image.new('L', (rad * 2, rad * 2), 0)
@@ -134,8 +145,6 @@ if __name__ == '__main__':
 #    x = width / 2
 #    y = height / 2
 #    draw.ellipse((x-r, y-r, x+r, y+r), outline=(255,255,255))
-
-
 
     img.save("ko.png")
 
