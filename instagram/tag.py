@@ -7,7 +7,7 @@ from instagram.media import Media
 from utilities.logger import *
 
 base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
-instagram_client_id = "cf050c7486414aaf899a6e4c23db7090"
+instagram_client_id = ""
 instagram_count = 1
 
 
