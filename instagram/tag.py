@@ -1,32 +1,34 @@
-#!/usr/bin/env python
-
 import json
 import datetime
+import logging
+from urllib.error import HTTPError
 from urllib.request import urlopen
 from instagram.media import Media
-from utilities.logger import *
 
-base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&client_id=%s"
-instagram_client_id = ""
+base_url = "https://api.instagram.com/v1/tags/%s/media/recent?count=%d&access_token=%s"
 instagram_count = 1
-
 
 class Tag:
 
-    def __init__(self, tag):
+    def __init__(self, tag, access_token):
         self.tag = tag
+        self.access_token = access_token
         self.min_tag_id = ""
         self.last_media_id = ""
         self.enabled = True
 
     def get_instagram_feed(self):
-        url = base_url % (self.tag, instagram_count, instagram_client_id)
+        url = base_url % (self.tag, instagram_count, self.access_token)
         if self.min_tag_id != "":
             url += "&min_tag_id=" + self.min_tag_id
 
-        debug("Get media with url: %s", args=(url,))
-        content = urlopen(url).read()
-        return json.loads(content.decode("utf8"))
+        try:
+            logging.debug("Get media with url: %s" % url)
+            content = urlopen(url).read()
+            return json.loads(content.decode("utf8"))
+        except HTTPError as e:
+            logging.error("Failed to fetch data from instagram %s" % e)
+            return dict()
 
     def run(self):
         if self.enabled:
@@ -35,10 +37,10 @@ class Tag:
 
             for element in collection:
                 media = Media(element)
-                log("Found media: %s", args=(media,))
+                logging.info("Found media: %s" % media)
 
                 if not media.valid():
-                    log("Will skip non valid media: %s", args=(element,))
+                    logging.info("Will skip non valid media: %s" % element)
                     continue
                 if self.last_media_id == media.id:
                     continue

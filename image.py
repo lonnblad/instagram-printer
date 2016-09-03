@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import io
 import textwrap
 import datetime

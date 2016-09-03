@@ -1,10 +1,7 @@
-#!/usr/bin/env python
-
 import time
 import datetime
+import logging
 from image import *
-from utilities.logger import *
-
 
 class Media:
 
@@ -18,7 +15,7 @@ class Media:
                 "standard_resolution", {}).get("url")
             self.caption = data.get("caption", {}).get("text")
         except AttributeError as err:
-            log("Caught exception: %s", args=(err,))
+            logging.info("Caught exception: %s", args=(err,))
 
     def __str__(self):
         return '\n\tid:"%s",\n\tauthor:"%s",\n\tcaption:"%s"' % (self.id, self.author, self.caption)

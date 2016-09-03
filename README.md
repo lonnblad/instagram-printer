@@ -9,7 +9,8 @@ Dependecies:
 
   $ brew install imagemagick
 
-  $ pip install -U jsonpickle
+Install python dependencies:
 
+  $ pip install -r requirements.txt
 
 Execute: python run.go

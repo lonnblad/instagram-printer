@@ -1,21 +1,19 @@
-#!/usr/bin/env python
-
 import time
 import datetime
 import threading
 import os
+import tempfile
+import logging
 
 from os import listdir
 from PIL import Image
 from threading import Thread
 from printer.worker import Printer
-from utilities.logger import *
-
 
 class Dispatcher(threading.Thread):
 
-    def __init__(self, dry_run, sleep_interval):
-        self.printer = Printer("SIGMA_EE_CP1200_1", sleep_interval)
+    def __init__(self, dry_run, printer, sleep_interval):
+        self.printer = Printer(printer, sleep_interval)
         self.sleep_interval = sleep_interval
         self.dry_run = dry_run
 
@@ -23,7 +21,7 @@ class Dispatcher(threading.Thread):
         self._stopper = threading.Event()
 
     def stop(self):
-        log("Stopping Printer thread")
+        logging.info("Stopping Printer thread")
         self._stopper.set()
 
     def stopped(self):
@@ -33,12 +31,12 @@ class Dispatcher(threading.Thread):
         if not self.dry_run:
             self.printer.block_while_occupied()
 
+        tempdir = tempfile.mkdtemp()
+        logging.info("Temp directory used: %s" % tempdir)
         while not self.stopped():
-            print("P", end="", flush=True)
-
-            image_files = [f for f in listdir("temp") if f.endswith(".png")]
+            image_files = [f for f in listdir(tempdir) if f.endswith(".png")]
             for image_file in image_files:
-                image_png_path = "temp/" + image_file
+                image_png_path = "%s/%s" % (tempdir, image_file)
                 if self.dry_run:
                     Image.open(image_png_path).show()
                 else:

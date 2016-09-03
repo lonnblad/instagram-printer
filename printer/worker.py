@@ -1,11 +1,8 @@
-#!/usr/bin/env python
-
 import time
 import subprocess
 import datetime
 import os
-from utilities.logger import *
-
+import logging
 
 class Printer:
 
@@ -15,7 +12,7 @@ class Printer:
 
     def block_while_occupied(self):
         while subprocess.check_output(["lpstat", "-o", self.name]) != "":
-            log("Printing file")
+            logging.info("Printing file: %s" % self.name)
             time.sleep(self.sleep_interval)
 
     def print_image(png_path):
